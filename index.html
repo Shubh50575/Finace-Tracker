@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Finance Tracker</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 40px;
+            background-color: #f4f4f4;
+        }
+        h1 {
+            text-align: center;
+        }
+        .container {
+            max-width: 800px;
+            margin: auto;
+            background: #fff;
+            padding: 20px;
+            border-radius: 8px;
+        }
+        button {
+            margin: 5px;
+            padding: 10px 20px;
+            font-size: 1em;
+            cursor: pointer;
+        }
+        input, select, textarea {
+            width: 100%;
+            padding: 8px;
+            margin-top: 5px;
+            margin-bottom: 15px;
+            box-sizing: border-box;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        table, th, td {
+            border: 1px solid #ddd;
+        }
+        th, td {
+            padding: 12px;
+            text-align: left;
+        }
+        #summary {
+            margin-top: 20px;
+        }
+        .section {
+            margin-top: 30px;
+        }
+    </style>
+</head>
+<body>
+    <h1>💸 Finance Tracker 💸</h1>
+    <div class="container">
+        <div class="section">
+            <button onclick="showAddTransaction()">Add Transaction</button>
+            <button onclick="viewTransactions()">View Transactions</button>
+            <button onclick="showSummary()">Summary</button>
+        </div>
+
+        <!-- Add Transaction Form -->
+        <div id="addTransactionSection" style="display:none;">
+            <h2>Add Transaction</h2>
+            <form id="transactionForm" onsubmit="addTransaction(event)">
+                <label>Type:</label>
+                <select id="transType" required>
+                    <option value="">Select</option>
+                    <option value="i">Income (+)</option>
+                    <option value="e">Expense (-)</option>
+                </select>
+                <label>Amount ($):</label>
+                <input type="number" id="amount" step="0.01" required />
+                <label>Category:</label>
+                <input type="text" id="category" required />
+                <label>Description:</label>
+                <textarea id="description" required></textarea>
+                <button type="submit">Add</button>
+            </form>
+        </div>
+
+        <!-- View Transactions -->
+        <div id="viewTransactionsSection" style="display:none;">
+            <h2>Transactions</h2>
+            <table id="transactionsTable">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Amount</th>
+                        <th>Category</th>
+                        <th>Description</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+
+        <!-- Summary -->
+        <div id="summarySection" style="display:none;">
+            <h2>Financial Summary</h2>
+            <div id="summary"></div>
+        </div>
+    </div>
+
+    <script>
+        // Load data from local storage or initialize
+        let transactions = JSON.parse(localStorage.getItem('transactions')) || [];
+
+        function saveTransactions() {
+            localStorage.setItem('transactions', JSON.stringify(transactions));
+        }
+
+        function showAddTransaction() {
+            hideAllSections();
+            document.getElementById('addTransactionSection').style.display = 'block';
+        }
+
+        function viewTransactions() {
+            hideAllSections();
+            document.getElementById('viewTransactionsSection').style.display = 'block';
+            displayTransactions();
+        }
+
+        function showSummary() {
+            hideAllSections();
+            document.getElementById('summarySection').style.display = 'block';
+            displaySummary();
+        }
+
+        function hideAllSections() {
+            document.getElementById('addTransactionSection').style.display = 'none';
+            document.getElementById('viewTransactionsSection').style.display = 'none';
+            document.getElementById('summarySection').style.display = 'none';
+        }
+
+        function addTransaction(e) {
+            e.preventDefault();
+            const type = document.getElementById('transType').value;
+            const amount = parseFloat(document.getElementById('amount').value).toFixed(2);
+            const category = document.getElementById('category').value;
+            const description = document.getElementById('description').value;
+            const date = new Date().toISOString().slice(0,10);
+
+            const symbol = type === 'i' ? '+' : '-';
+
+            transactions.push({
+                date,
+                amount: symbol + amount,
+                category,
+                description
+            });
+            saveTransactions();
+            alert('Transaction added successfully!');
+            document.getElementById('transactionForm').reset();
+        }
+
+        function displayTransactions() {
+            const tbody = document.querySelector('#transactionsTable tbody');
+            tbody.innerHTML = '';
+            if (transactions.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="4">No transactions found.</td></tr>';
+                return;
+            }
+            transactions.forEach(tx => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${tx.date}</td>
+                    <td>${tx.amount}</td>
+                    <td>${tx.category}</td>
+                    <td>${tx.description}</td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        function displaySummary() {
+            let totalIncome = 0;
+            let totalExpense = 0;
+            transactions.forEach(tx => {
+                if (tx.amount.startsWith('+')) {
+                    totalIncome += parseFloat(tx.amount.slice(1));
+                } else {
+                    totalExpense += parseFloat(tx.amount.slice(1));
+                }
+            });
+            const balance = totalIncome - totalExpense;
+            document.getElementById('summary').innerHTML = `
+                <p>Total Income: $${totalIncome.toFixed(2)}</p>
+                <p>Total Expense: $${totalExpense.toFixed(2)}</p>
+                <p>Balance: $${balance.toFixed(2)}</p>
+            `;
+        }
+
+        // Initialize view
+        showAddTransaction();
+    </script>
+</body>
+</html>
